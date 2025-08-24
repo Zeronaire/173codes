@@ -1,3 +1,5 @@
+# Edited mlp.py with resume functionality and scaler saving
+
 import pandas as pd
 import torch
 import torch.nn as nn
@@ -13,6 +15,10 @@ import joblib  # For saving scalers
 parser = argparse.ArgumentParser()
 parser.add_argument('--resume', type=str, default=None, help='Path to checkpoint to resume from')
 parser.add_argument('--num_epochs', type=int, default=50, help='Number of epochs to train')
+parser.add_argument('--H', type=float, default=100.0, help='Altitude (H)')
+parser.add_argument('--V', type=float, default=7492.13, help='Velocity (V)')
+parser.add_argument('--alpha', type=float, default=0.0, help='Angle of attack (alpha)')
+parser.add_argument('--beta', type=float, default=-90.0, help='Sideslip angle (beta)')
 args = parser.parse_args()
 
 # Step 1: Load and Preprocess Data
@@ -105,7 +111,8 @@ for epoch in range(start_epoch, args.num_epochs):
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
     }
-    torch.save(checkpoint, f"aero_mlp_checkpoint_epoch_{epoch+1}.pth")
+    
+torch.save(checkpoint, f"aero_mlp_checkpoint_final.pth")
 
 # Step 4: Evaluate on Test Set
 model.eval()
@@ -120,7 +127,7 @@ print(f"Test Loss: {test_loss / len(test_loader):.6f}")
 
 # Step 5: Inference Example
 # Example input: H=100, V=7492.13, alpha=0, beta=-90
-example_input = np.array([[100, 7492.13, 0, -90]])
+example_input = np.array([[args.H, args.V, args.alpha, args.beta]])
 example_input = scaler_X.transform(example_input)
 example_tensor = torch.tensor(example_input, dtype=torch.float32)
 
@@ -135,4 +142,4 @@ for coeff, value in zip(coeffs, pred[0]):
     print(f"{coeff}: {value:.5f}")
 
 # Save final model
-torch.save(model.state_dict(), "aero_mlp.pth")
+#torch.save(model.state_dict(), "aero_mlp.pth")
